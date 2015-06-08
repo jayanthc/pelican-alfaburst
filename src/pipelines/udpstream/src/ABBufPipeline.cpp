@@ -83,6 +83,7 @@ void ABBufPipeline::run(QHash<QString, DataBlob*>& remoteData)
 #ifdef TIMING_ENABLED
     timerStart(&_totalTime);
 #endif
+    std::cout << "in pipeline run" << std::endl;
     // Get pointers to the remote data blob(s) from the supplied hash.
     SpectrumDataSetStokes* stokes = (SpectrumDataSetStokes*) remoteData["SpectrumDataSetStokes"];
     if( !stokes ) throw(QString("No stokes!"));

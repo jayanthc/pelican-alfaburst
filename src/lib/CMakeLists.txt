@@ -141,6 +141,7 @@ set(pelican-lofar_externals
     ${lofar_dal_libs}
     ${hdf5_libs}
     rt
+    hiredis
 )
 
 target_link_libraries(pelican-lofar_static ${pelican-lofar_externals})

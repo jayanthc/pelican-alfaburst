@@ -1,5 +1,5 @@
 #include "BufferingAgent.h"
-
+#include <iostream>
 
 namespace pelican {
 namespace ampp {
@@ -10,6 +10,7 @@ BufferingAgent::BufferingAgent(const DataFetchFunction& fn)
     , _halt(false)
     , _fn(fn)
 {
+    std::cout << "in ba constructor" << std::endl;
     // create some objects to fill
     for(unsigned int i=0; i < _max_queue_length; ++i ) {
         _buffer_objects.push_back(DataBlobHash());
@@ -29,8 +30,13 @@ void BufferingAgent::run() {
     while(1) {
         if(_halt) return;
         DataBlobHash& hash = *(_buffer.next()); // blocks until ready
-        if(_halt) return;
+        std::cout << "got next buffer!" << std::endl;
+        if(_halt) {
+            std::cout << "blah" << std::endl;
+            return;
+        }
         _fn(hash);
+        std::cout << "pushing to the queue" << std::endl;
         _queue.push_back(&hash);
     }
 }
@@ -43,8 +49,11 @@ void BufferingAgent::stop()
 
 void BufferingAgent::getData(BufferingAgent::DataBlobHash& hash) {
     // spin until we have data
-    do{} // TODO verify empty() is thread safe (and _queue.pop_front() call later on particularly when the _buffer is still filling slots)
+    std::cout << "a" << std::endl;
+    do{
+    } // TODO verify empty() is thread safe (and _queue.pop_front() call later on particularly when the _buffer is still filling slots)
     while(_queue.empty());
+    std::cout << "b" << std::endl;
 
     DataBlobHash* tmp = _queue.front();
     hash.swap(*tmp); // TODO verify this is doing what we think its doing

@@ -118,6 +118,19 @@ target_link_libraries(serverEmbrace2
 )
 install(TARGETS serverEmbrace2 DESTINATION ${BINARY_INSTALL_DIR})
 
+# === Create the ALFABURST server binary.
+include_directories(${CMAKE_SOURCE_DIR}/lib)
+add_executable(ABServer ABServerMain.cpp)
+target_link_libraries(ABServer
+    pelican-lofar_static
+    ${PELICAN_LIBRARY}
+    ${QT_QTCORE_LIBRARY}
+    ${QT_QTXML_LIBRARY}
+    ${QT_QTNETWORK_LIBRARY}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+)
+install(TARGETS ABServer DESTINATION ${BINARY_INSTALL_DIR})
+
 # === Doxygen documentation targets.
 include(UseDoxygen)
 set(PDFLATEX_COMPILER TRUE)

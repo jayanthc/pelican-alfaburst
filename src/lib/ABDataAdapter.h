@@ -16,6 +16,9 @@ class ABDataAdapter : public AbstractStreamAdapter
         // Constructs the adapter.
         ABDataAdapter(const ConfigNode& config);
 
+        // Get the observation start time from SCRAM packets
+        void getStartTimeFromSCRAM(void);
+
         // Method to deserialise chunks of memory provided by the I/O device.
         void deserialise(QIODevice* device);
 
@@ -26,6 +29,7 @@ class ABDataAdapter : public AbstractStreamAdapter
         static const unsigned _footerSize = 8;
         unsigned _pktsPerSpec;
         unsigned _channelsPerPacket;
+        unsigned _channelsPerBlob;
         unsigned _samplesPerPacket;
         unsigned _packetSize;
         unsigned int _nPolarisations;

@@ -4,6 +4,8 @@
 #include <iomanip>
 //#include <sys/time.h>
 #include <omp.h>
+#include <hiredis/hiredis.h>
+
 using namespace pelican;
 using namespace pelican::ampp;
 
@@ -17,6 +19,7 @@ ABDataAdapter::ABDataAdapter(const ConfigNode& config)
     _pktsPerSpec = config.getOption("spectrum", "packets").toUInt();
     _channelsPerPacket = config.getOption("packet", "channels").toUInt();
     _samplesPerPacket = config.getOption("packet", "samples").toUInt();
+    _channelsPerBlob = config.getOption("blob", "channels").toUInt();
     _tSamp = config.getOption("samplingTime", "seconds").toFloat();
 
     // Set up the packet data.
@@ -24,7 +27,8 @@ ABDataAdapter::ABDataAdapter(const ConfigNode& config)
 
     // Calculate the total number of channels.
     //_nChannels = _pktsPerSpec * _channelsPerPacket;
-    _nChannels = _channelsPerPacket;
+    //    _nChannels = _channelsPerPacket;
+    _nChannels = _channelsPerBlob;
 
     // Set missing packet stats.
     _numMissInst = 0;
@@ -35,11 +39,35 @@ ABDataAdapter::ABDataAdapter(const ConfigNode& config)
     _prevIntegCount = 0;
 
     _integCountStart = 0;
-    _tStart = 0.0;
     _first = 1;
     _timestampFirst = 1;
 
     _x = 0;
+
+    // Get start time (MJD) from scram
+    _tStart = 0.0;
+    getStartTimeFromSCRAM();
+}
+
+// Get start time (MJD) from scram
+void ABDataAdapter::getStartTimeFromSCRAM(void)
+{
+    redisContext *c = redisConnect("serendip6", 6379);
+    redisReply *reply = (redisReply *) redisCommand(c, "HMGET SCRAM:PNT PNTMJD");
+    if (REDIS_REPLY_ERROR == reply->type)
+    {
+        std::cerr << "ERROR: Getting MJD from SCRAM failed! Start MJD will be 0." << std::endl;
+        freeReplyObject(reply);
+        redisFree(c);
+        return;
+    }
+    _tStart = atof(reply->element[0]->str);
+    std::cout << "MJD: " << _tStart << std::endl;
+
+    freeReplyObject(reply);
+    redisFree(c);
+
+    return;
 }
 
 // Called to de-serialise a chunk of data from the input device.
@@ -117,8 +145,6 @@ void ABDataAdapter::deserialise(QIODevice* device)
         }
         else
         {
-            //temp: set it to 2015-03-03 midnight
-            _tStart = 57084.0;
             _integCountStart = integCount;
             _first = 0;
         }
@@ -153,6 +179,7 @@ void ABDataAdapter::deserialise(QIODevice* device)
                                       + ntohs(dd[chan * 4 + 1]));      // YY*
             }
 #endif
+     
             //memset(d, '\0', _pktsPerSpec * (_packetSize - _headerSize - _footerSize));
             //memset(d, '\0', _packetSize - _headerSize - _footerSize);
             //bytesRead = 0;
