@@ -16,8 +16,8 @@ class ABDataAdapter : public AbstractStreamAdapter
         // Constructs the adapter.
         ABDataAdapter(const ConfigNode& config);
 
-        // Get the observation start time from SCRAM packets
-        void getStartTimeFromSCRAM(void);
+        // Get the ROACH2 reset time from the S6 redis databse
+        void getResetTimeFromRedis();
 
         // Method to deserialise chunks of memory provided by the I/O device.
         void deserialise(QIODevice* device);
@@ -40,7 +40,7 @@ class ABDataAdapter : public AbstractStreamAdapter
         unsigned int _numMissPkts;
         signed int _prevSpecQuart;
         unsigned long int _prevIntegCount;
-        float _tStart;
+        double _mcount0UnixTime;
         float _tSamp;
         unsigned long int _integCountStart;
         double _lastTimestamp;

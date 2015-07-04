@@ -39,7 +39,14 @@ int main(int argc, char ** argv)
         // Create a communication protocol object and attach it to the server
         // on port 15000.
         AbstractProtocol *protocol =  new PelicanProtocol;
-        server.addProtocol(protocol, 15000);
+
+        // Get the transmission port address
+        Config::TreeAddress address;
+        address << Config::NodeId("server", "");
+        ConfigNode configNode = config.get(address);
+        quint16 txPort = (quint16) configNode.getOption("tx", "port").toUInt();
+        std::cout << "Using port " << txPort << "." << std::endl;
+        server.addProtocol(protocol, txPort);
 
         // Start the server.
         server.start();

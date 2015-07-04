@@ -72,6 +72,9 @@ class DedispersionModule : public AsyncronousModule
         DedispersionModule( const ConfigNode& config );
         ~DedispersionModule();
 
+        /// read LO frequency from the redis database
+        void getLOFreqFromRedis();
+
         /// wait for all asyncronous tasks that have been launched to complete
         void waitForJobCompletion();
 
@@ -116,6 +119,7 @@ class DedispersionModule : public AsyncronousModule
         unsigned _numSamplesBuffer;
         float _dmStep;
         float _dmLow;
+        double _LOFreq;
         double _fch1;
         double _foff;
         QList<DedispersionBuffer*> _buffersList;

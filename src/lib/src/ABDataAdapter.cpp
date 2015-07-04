@@ -44,25 +44,36 @@ ABDataAdapter::ABDataAdapter(const ConfigNode& config)
 
     _x = 0;
 
-    // Get start time (MJD) from scram
-    _tStart = 0.0;
-    getStartTimeFromSCRAM();
+    // Get start time (MJD) from the S6 redis server
+    _mcount0UnixTime = 0.0;
+    getResetTimeFromRedis();
 }
 
-// Get start time (MJD) from scram
-void ABDataAdapter::getStartTimeFromSCRAM(void)
+// Get ROACH2 reset time (MJD) from the S6 redis database
+void ABDataAdapter::getResetTimeFromRedis()
 {
+    long int mcount0time = 0;
+    double mcount0MJD = 0.0;
+
     redisContext *c = redisConnect("serendip6", 6379);
-    redisReply *reply = (redisReply *) redisCommand(c, "HMGET SCRAM:PNT PNTMJD");
+    redisReply *reply = (redisReply *) redisCommand(c, "GET s6_mcount_0");
     if (REDIS_REPLY_ERROR == reply->type)
     {
-        std::cerr << "ERROR: Getting MJD from SCRAM failed! Start MJD will be 0." << std::endl;
+        std::cerr << "ERROR: Getting MJD from redis failed! Start MJD will be 0." << std::endl;
         freeReplyObject(reply);
         redisFree(c);
         return;
     }
-    _tStart = atof(reply->element[0]->str);
-    std::cout << "MJD: " << _tStart << std::endl;
+
+    // mcount0time is the number of seconds elapsed since the Epoch,
+    // 1970-01-01 00:00:00 +0000 (UTC), when the mcount on the ROACH2s were
+    // reset to 0
+    mcount0time = atoi(reply->str);
+    // Convert this to MJD; 2440587.5 is the MJD of the Unix Epoch
+    mcount0MJD = ((double) mcount0time / 86400) + 40587.0;
+    _mcount0UnixTime = mcount0time;
+
+    std::cout << "ROACH2 reset MJD: " << mcount0MJD << std::endl;
 
     freeReplyObject(reply);
     redisFree(c);
@@ -108,6 +119,7 @@ void ABDataAdapter::deserialise(QIODevice* device)
     unsigned int icDiff = 0;
     unsigned int sqDiff = 0;
     double timestamp = 0.0;
+    unsigned long int firstIntegCountThisBlock = 0;
 
     for (unsigned p = 0; p < packets; p++)
     {
@@ -131,6 +143,10 @@ void ABDataAdapter::deserialise(QIODevice* device)
                      + ((counter & 0x000000000000FF00) << 24)
                      + ((counter & 0x00000000000000FF) << 40));
 
+        if (0 == p)
+        {
+            firstIntegCountThisBlock = integCount;
+        }
         //std::cout << integCount << std::endl;
         timestamp = ((double) (integCount - _integCountStart) * _tSamp);
         if (!_first)
@@ -193,7 +209,7 @@ void ABDataAdapter::deserialise(QIODevice* device)
 #endif
     }
 
-    blob->setLofarTimestamp(timestamp);
+    blob->setLofarTimestamp((firstIntegCountThisBlock * _tSamp) + _mcount0UnixTime);
     blob->setBlockRate(_tSamp);
     timerUpdate(&_adapterTime);
 }

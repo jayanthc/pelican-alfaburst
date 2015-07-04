@@ -243,12 +243,12 @@ target_link_libraries(JTestPipelineStream
 
 
 # === Build the ALFABURST pipeline binary
-add_executable(ABPipelineStream src/ABPipelineMain.cpp)
-set_target_properties(ABPipelineStream PROPERTIES
+add_executable(ABPipeline src/ABPipelineMain.cpp)
+set_target_properties(ABPipeline PROPERTIES
     COMPILE_FLAGS "${OpenMP_CXX_FLAGS}"
     LINK_FLAGS "${OpenMP_CXX_FLAGS}"
 )
-target_link_libraries(ABPipelineStream
+target_link_libraries(ABPipeline
     pelicanMdsm
     pelican-lofar_static
     ${PELICAN_LIBRARY}
@@ -258,6 +258,8 @@ target_link_libraries(ABPipelineStream
     ${QT_QTXML_LIBRARY}
     ${QT_QTCORE_LIBRARY}
 )
+install(TARGETS ABPipeline
+		DESTINATION ${BINARY_INSTALL_DIR})
 
 # === Build the ALFABURST buffered pipeline binary
 add_executable(ABBufPipelineStream src/ABBufPipelineMain.cpp)

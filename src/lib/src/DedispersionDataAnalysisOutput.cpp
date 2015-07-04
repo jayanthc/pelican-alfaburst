@@ -91,7 +91,7 @@ void DedispersionDataAnalysisOutput::sendStream(const QString& /*streamName*/, c
         const DedispersionEvent& e = data->events()[i];
         //std::cout << e.getTime() << ", " << _epoch << std::endl;
         //double mjdStamp = (e.getTime()-_epoch)/86400 + 55562.0;
-        double mjdStamp = e.getTime() / 86400;
+        double mjdStamp = (e.getTime() / 86400) + 40587;
         //                    float SNR = e.amplitude()/rms;
         float SNR = e.mfValue()/(rms * sqrt(e.mfBinning()));
         if (SNR > SNRmax){
@@ -102,7 +102,7 @@ void DedispersionDataAnalysisOutput::sendStream(const QString& /*streamName*/, c
         *out << left << mjdStamp << ",   " << e.dm() << ", " << SNR << ", " << bf << "\n";
       }
       //double mjdBlock = (data->events()[0].getTime()-_epoch)/86400 + 55562.0;
-      double mjdBlock = data->events()[0].getTime() / 86400;
+      double mjdBlock = (data->events()[0].getTime() / 86400) + 40587;
       ++_indexOfDump;
       *out << "# Written buffer :" << _indexOfDump << " | MJDstart: " << mjdBlock <<
         " | Best DM: "<< DMthis << " | Max SNR: " << SNRmax << "  Done\n";

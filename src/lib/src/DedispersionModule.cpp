@@ -17,6 +17,7 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/random/variate_generator.hpp>
+#include <hiredis/hiredis.h>
 
 extern "C" void cacheDedisperseLoop( float *outbuff, long outbufSize, float *buff, float mstartdm,
                                      float mdmstep, int tdms, const int numSamples,
@@ -55,10 +56,8 @@ DedispersionModule::DedispersionModule( const ConfigNode& config )
     _dmStep = config.getOption("dedispersionStepSize", "value", "0.0").toFloat();
     _dmLow = config.getOption("dedispersionMinimum", "value", "0.0").toFloat();
     if( _dmLow < 0.0 ) { _dmLow = 0.0; }
-    _fch1 = config.getOption("frequencyChannel1", "MHz", "0.0").toDouble();
     _foff = config.getOption("channelBandwidth", "MHz", "1.0").toDouble();
     _invert = ( _foff >= 0 )?1:0;
-    if( _fch1 == 0 ) { throw QString("DedispersionModule: frequencyChannel1 must be a positve number"); }
 
     unsigned int maxBuffers = config.getOption("numberOfBuffers", "value", "2").toUInt();
     if( maxBuffers < 1 ) throw(QString("DedispersionModule: Must have at least one buffer"));
@@ -84,6 +83,25 @@ DedispersionModule::~DedispersionModule()
 {
     waitForJobCompletion();
     _cleanBuffers();
+}
+
+void DedispersionModule::getLOFreqFromRedis()
+{
+    redisContext *c = redisConnect("serendip6", 6379);
+    redisReply *reply = (redisReply *) redisCommand(c, "HMGET SCRAM:IF1 IF1SYNHZ");
+    if (REDIS_REPLY_ERROR == reply->type)
+    {
+        std::cerr << "ERROR: Getting LO frequency from redis failed!" << std::endl;
+        freeReplyObject(reply);
+        redisFree(c);
+        return;
+    }
+
+    _LOFreq = atof(reply->element[0]->str);
+    // convert to MHz
+    _LOFreq /= 1e6;
+
+    return;
 }
 
 void DedispersionModule::waitForJobCompletion() {
@@ -113,6 +131,14 @@ void DedispersionModule::resize( const SpectrumDataSet<float>* streamData ) {
     unsigned int nPolarisations = streamData->nPolarisations();
     //    unsigned sampleSize = nSubbands * nChannels * nPolarisations;
     unsigned sampleSize = nSubbands * nChannels;
+
+    // calculate _fch1 from LO frequency and number of channels used
+    getLOFreqFromRedis();
+    //TODO: do this properly, based on number of channels, which spectral
+    //quarter, etc.
+    _fch1 = _LOFreq - (448.0 / 4);
+
+
     if( sampleSize != _currentBuffer->sampleSize() ) {
         unsigned maxBuffers = _buffersList.size();
         unsigned maxSamples = _currentBuffer->maxSamples();
