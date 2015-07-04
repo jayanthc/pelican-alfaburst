@@ -5,6 +5,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <hiredis/hiredis.h>
 
 namespace pelican {
 namespace ampp {
@@ -39,33 +40,13 @@ SigprocStokesWriter::SigprocStokesWriter(const ConfigNode& configNode )
     _lbahba     = configNode.getOption("LBA_0_or_HBA_1", "value", "1").toFloat();
     float subbandwidth =  _clock / (_nRawPols * _nTotalSubbands); // subband bandwidth in MHz
     float channelwidth = subbandwidth / _nChannels;
-    if( configNode.getOption("fch1", "value" ) == "" ){ 
-      if (_lbahba == 0) {
-	//        _fch1     = _clock / (_nRawPols * _nTotalSubbands) * _topsubband;
-	// if the line above gives you the centre frequency of the top
-	// subband, then the line below gives you the centre frequency
-	// of the top channel
-        _fch1     = subbandwidth * _topsubband + 0.5 * subbandwidth - 0.5 * channelwidth;
-
-      }
-      else{
-        if (_clock == 200)
-	  //          _fch1     = 100 + _clock / (_nRawPols * _nTotalSubbands) * _topsubband;
-	// if the line above gives you the centre frequency of the top
-	// subband, then the line below gives you the centre frequency
-	// of the top channel
-        _fch1     = 100 + subbandwidth * _topsubband + 0.5 * subbandwidth - 0.5 * channelwidth;
-        if (_clock == 160)
-	  //          _fch1     = 160 + _clock / (_nRawPols * _nTotalSubbands) * _topsubband;
-	// if the line above gives you the centre frequency of the top
-	// subband, then the line below gives you the centre frequency
-	// of the top channel
-        _fch1     = 160 + subbandwidth * _topsubband + 0.5 * subbandwidth - 0.5 * channelwidth;
-      }
-    }
-    else{
-      _fch1     = configNode.getOption("fch1", "value", "1400.0").toFloat();
-    }
+    
+    // calculate _fch1 from LO frequency and number of channels used
+    getLOFreqRADecFromRedis();
+    //TODO: do this properly, based on number of channels, which spectral
+    //quarter, etc.
+    _fch1 = _LOFreq - (448.0 / 4);
+    
     if( configNode.getOption("foff", "value" ) == "" ){ 
       //      _foff     = -_clock / (_nRawPols * _nTotalSubbands) / float(_nChannels);
       _foff     = -channelwidth;
@@ -87,17 +68,14 @@ SigprocStokesWriter::SigprocStokesWriter(const ConfigNode& configNode )
     _first = (configNode.hasAttribute("writeHeader") && configNode.getAttribute("writeHeader").toLower() == "true" );
     _site = configNode.getOption("TelescopeID", "value", "0").toUInt();
     _machine = configNode.getOption("MachineID", "value", "9").toUInt();
-    _raString = configNode.getOption("RAJ", "value", "000000.0");
-    _decString = configNode.getOption("DecJ", "value", "000000.0");
-    _ra = _raString.toFloat();
-    _dec = _decString.toFloat();
-    _sourceName = _raString.left(4);
+    /*_sourceName = _raString.left(4);
     if (_dec > 0.0 ) {
       _sourceName.append("+");
       _sourceName.append(_decString.left(4));
     } else {
       _sourceName.append(_decString.left(5));
-    }
+    }*/
+    _sourceName = "ABField";
     // Open file
     _buffer.resize(_buffSize);
 
@@ -110,6 +88,65 @@ SigprocStokesWriter::SigprocStokesWriter(const ConfigNode& configNode )
     fileName = _filepath + QString("_") + timestr + QString(".fil");
     //    _file.open(_filepath.toUtf8().data(), std::ios::out | std::ios::binary);
     _file.open(fileName.toUtf8().data(), std::ios::out | std::ios::binary);
+}
+
+void SigprocStokesWriter::getLOFreqRADecFromRedis()
+{
+    redisContext *c = redisConnect("serendip6", 6379);
+
+    // Get LO frequency
+    redisReply *reply = (redisReply *) redisCommand(c, "HMGET SCRAM:IF1 IF1SYNHZ");
+    if (REDIS_REPLY_ERROR == reply->type)
+    {
+        std::cerr << "ERROR: Getting LO frequency from redis failed!" << std::endl;
+        freeReplyObject(reply);
+        redisFree(c);
+        return;
+    }
+
+    _LOFreq = atof(reply->element[0]->str);
+    // convert to MHz
+    _LOFreq /= 1e6;
+
+    freeReplyObject(reply);
+
+    // Get RA
+    reply = (redisReply *) redisCommand(c, "HMGET SCRAM:PNT PNTRA");
+    if (REDIS_REPLY_ERROR == reply->type)
+    {
+        std::cerr << "ERROR: Getting LO frequency from redis failed!" << std::endl;
+        freeReplyObject(reply);
+        redisFree(c);
+        return;
+    }
+
+    _raString = reply->element[0]->str;
+    _ra = _raString.toFloat();
+    // SIGPROC requires RA to be scaled by 10000
+    _ra *= 10000;
+
+    freeReplyObject(reply);
+
+    // Get dec.
+    reply = (redisReply *) redisCommand(c, "HMGET SCRAM:PNT PNTDEC");
+    if (REDIS_REPLY_ERROR == reply->type)
+    {
+        std::cerr << "ERROR: Getting LO frequency from redis failed!" << std::endl;
+        freeReplyObject(reply);
+        redisFree(c);
+        return;
+    }
+
+    _decString = reply->element[0]->str;
+    _dec = _decString.toFloat();
+    // SIGPROC requires dec. to be scaled by 10000
+    _dec *= 10000;
+
+    freeReplyObject(reply);
+
+    redisFree(c);
+
+    return;
 }
 
 void SigprocStokesWriter::writeHeader(SpectrumDataSetStokes* stokes){
@@ -209,7 +246,8 @@ void SigprocStokesWriter::sendStream(const QString& /*streamName*/, const DataBl
                             for (int s = nSubbands - 1; s >= 0 ; --s) {
                                 long index = stokes->index(s, nSubbands, 
                                           p, nPolarisations, t, nChannels );
-                                for(int i = nChannels - 1; i >= 0 ; --i) {
+                                //for(int i = nChannels - 1; i >= 0 ; --i) {
+                                for(int i = 0; i < nChannels ; ++i) {
                                 _file.write(reinterpret_cast<const char*>(&data[index + i]), 
                                             sizeof(float));
                                 }

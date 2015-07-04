@@ -43,6 +43,7 @@ class SigprocStokesWriter : public AbstractOutputStream
         virtual void sendStream(const QString& streamName, const DataBlob* dataBlob);
 
     private:
+        void getLOFreqRADecFromRedis(void);
         // Header helpers
         void WriteString(QString string);
         void WriteInt(QString name, int value);
@@ -62,6 +63,7 @@ class SigprocStokesWriter : public AbstractOutputStream
         std::ofstream     _file;
         std::vector<char>  _buffer;
         QString       _sourceName, _raString, _decString;
+        double _LOFreq;
         float         _fch1, _foff, _tsamp, _refdm, _clock, _ra, _dec;
         float         _cropMin, _cropMax, _scaleDelta, _nRange; // for scaling floats to lesser values
         int           _nchans, _nTotalSubbands;

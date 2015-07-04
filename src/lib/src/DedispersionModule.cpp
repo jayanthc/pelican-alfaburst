@@ -250,35 +250,35 @@ void DedispersionModule::dedisperse( WeightedSpectrumDataSet* weightedData )
   do {
     unsigned ret = _currentBuffer->addSamples( weightedData, _noiseTemplate, &sampleNumber );
     if (0 == ret) {
-      timerStart(&_launchTimer);
-      timerStart(&_bufferTimer);
+      //timerStart(&_launchTimer);
+      //timerStart(&_bufferTimer);
       DedispersionBuffer* next = _buffers.next();
       next->clear();
-      timerUpdate(&_bufferTimer);
+      //timerUpdate(&_bufferTimer);
       {   // lock mutex scope
         // lock here to ensure there is just a single hit on the 
         // lock mutex for each buffer
         QMutexLocker l( &lockerMutex );
         lockAllUnprotected( _blobs );
-        timerStart(&_copyTimer);
+        //timerStart(&_copyTimer);
         //        std::cout << "maxshift to be copied" << std::endl;
 	//        lockAllUnprotected( _currentBuffer->copy( next, _noiseTemplate, _maxshift ) );
         lockAllUnprotected( _currentBuffer->copy( next, _noiseTemplate, _maxshift + _remainingSamples, sampleNumber ) );
 //        lockAllUnprotected( _currentBuffer->copy( next, _noiseTemplate, _maxshift, sampleNumber ) );
         //        std::cout << "maxshift copied" << std::endl;
         
-        timerUpdate( &_copyTimer );
+        //timerUpdate( &_copyTimer );
         // ensure lock is maintianed for the next buffer
         // if not already marked by the maxshift copy
         if( sampleNumber != maxSamples && ! next->inputDataBlobs().contains(streamData) )
           lockUnprotected( streamData );
       }
       _blobs.clear();
-      timerStart( &_dedisperseTimer );
+      //timerStart( &_dedisperseTimer );
       QtConcurrent::run( this, &DedispersionModule::dedisperse, _currentBuffer, _dedispersionDataBuffer.next() );
-      timerUpdate( &_dedisperseTimer );
+      //timerUpdate( &_dedisperseTimer );
       _currentBuffer = next;
-      timerUpdate(&_launchTimer);
+      //timerUpdate(&_launchTimer);
       //timerReport(&_launchTimer, "Launch Total");
       //timerReport(&_dedisperseTimer, "Dedispersing Time");
       //timerReport(&_bufferTimer,"bufferTimer");

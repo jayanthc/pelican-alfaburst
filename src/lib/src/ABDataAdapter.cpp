@@ -84,7 +84,7 @@ void ABDataAdapter::getResetTimeFromRedis()
 // Called to de-serialise a chunk of data from the input device.
 void ABDataAdapter::deserialise(QIODevice* device)
 {
-    timerStart(&_adapterTime);
+    //timerStart(&_adapterTime);
     /*struct timeval stTime = {0};
     (void) gettimeofday(&stTime, NULL);
     double t = (stTime.tv_sec - 1425601680) + (stTime.tv_usec * 0.000001);
@@ -153,7 +153,7 @@ void ABDataAdapter::deserialise(QIODevice* device)
         {
             if (timestamp - _lastTimestamp > _tSamp)
             {
-                std::cerr << "FATAL! " << integCount << ", " << _prevIntegCount << ", " << _integCountStart
+                std::cerr << "ERROR! " << integCount << ", " << _prevIntegCount << ", " << _integCountStart
                     << std::fixed << std::setprecision(10)
                     << ", " << timestamp << ", " << _lastTimestamp
                     << std::endl;
@@ -211,6 +211,6 @@ void ABDataAdapter::deserialise(QIODevice* device)
 
     blob->setLofarTimestamp((firstIntegCountThisBlock * _tSamp) + _mcount0UnixTime);
     blob->setBlockRate(_tSamp);
-    timerUpdate(&_adapterTime);
+    //timerUpdate(&_adapterTime);
 }
 

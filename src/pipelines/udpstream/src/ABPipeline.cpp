@@ -81,7 +81,7 @@ void ABPipeline::init()
 void ABPipeline::run(QHash<QString, DataBlob*>& remoteData)
 {
 #ifdef TIMING_ENABLED
-    timerStart(&_totalTime);
+    //timerStart(&_totalTime);
 #endif
     // Get pointers to the remote data blob(s) from the supplied hash.
     SpectrumDataSetStokes* stokes = (SpectrumDataSetStokes*) remoteData["SpectrumDataSetStokes"];
@@ -100,24 +100,25 @@ void ABPipeline::run(QHash<QString, DataBlob*>& remoteData)
     *stokesBuf = *_intStokes;
     _weightedIntStokes->reset(stokesBuf);
 #ifdef TIMING_ENABLED
-    timerStart(&_rfiClipperTime);
+    //timerStart(&_rfiClipperTime);
 #endif
     _rfiClipper->run(_weightedIntStokes);
 #ifdef TIMING_ENABLED
-    timerUpdate(&_rfiClipperTime);
+    //timerUpdate(&_rfiClipperTime);
 #endif
 #ifdef TIMING_ENABLED
-    timerStart(&_dedispersionTime);
+    //timerStart(&_dedispersionTime);
 #endif
     _dedispersionModule->dedisperse(_weightedIntStokes);
 #ifdef TIMING_ENABLED
-    timerUpdate(&_dedispersionTime);
+    //timerUpdate(&_dedispersionTime);
 #endif
     if (0 == _counter % 100)
     {
         std::cout << _counter << " chunks processed." << std::endl;
     }
 #ifdef TIMING_ENABLED
+#if 0
     timerUpdate(&_totalTime);
     if (0 == _counter % 1000)
     {
@@ -134,6 +135,7 @@ void ABPipeline::run(QHash<QString, DataBlob*>& remoteData)
                   _totalTime.timeAverage << " sec" << "\n";
         std::cout << std::endl;
     }
+#endif
 #endif
 
     _counter++;
