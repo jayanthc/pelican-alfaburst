@@ -59,6 +59,12 @@ DedispersionModule::DedispersionModule( const ConfigNode& config )
     _foff = config.getOption("channelBandwidth", "MHz", "1.0").toDouble();
     _invert = ( _foff >= 0 )?1:0;
 
+    // calculate _fch1 from LO frequency and number of channels used
+    getLOFreqFromRedis();
+    //TODO: do this properly, based on number of channels, which spectral
+    //quarter, etc.
+    _fch1 = _LOFreq - (448.0 / 4);
+
     unsigned int maxBuffers = config.getOption("numberOfBuffers", "value", "2").toUInt();
     if( maxBuffers < 1 ) throw(QString("DedispersionModule: Must have at least one buffer"));
 
@@ -101,6 +107,9 @@ void DedispersionModule::getLOFreqFromRedis()
     // convert to MHz
     _LOFreq /= 1e6;
 
+    freeReplyObject(reply);
+    redisFree(c);
+
     return;
 }
 
@@ -131,13 +140,6 @@ void DedispersionModule::resize( const SpectrumDataSet<float>* streamData ) {
     unsigned int nPolarisations = streamData->nPolarisations();
     //    unsigned sampleSize = nSubbands * nChannels * nPolarisations;
     unsigned sampleSize = nSubbands * nChannels;
-
-    // calculate _fch1 from LO frequency and number of channels used
-    getLOFreqFromRedis();
-    //TODO: do this properly, based on number of channels, which spectral
-    //quarter, etc.
-    _fch1 = _LOFreq - (448.0 / 4);
-
 
     if( sampleSize != _currentBuffer->sampleSize() ) {
         unsigned maxBuffers = _buffersList.size();
