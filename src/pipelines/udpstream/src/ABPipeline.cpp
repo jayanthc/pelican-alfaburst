@@ -56,6 +56,8 @@ ABPipeline::~ABPipeline()
 void ABPipeline::init()
 {
     ConfigNode c = config(QString("ABPipeline"));
+    // history indicates the number of datablobs to keep (iterations of run())
+    // it should be Dedidpersion Buffer size (in Blobs)*number of Dedispersion Buffers
     unsigned int history = c.getOption("history", "value", "10").toUInt();
     _minEventsFound = c.getOption("events", "min", "5").toUInt();
     _maxEventsFound = c.getOption("events", "max", "5").toUInt();
