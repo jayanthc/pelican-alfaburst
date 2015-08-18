@@ -42,7 +42,7 @@ SigprocStokesWriter::SigprocStokesWriter(const ConfigNode& configNode )
     float channelwidth = subbandwidth / _nChannels;
     
     // calculate _fch1 from LO frequency and number of channels used
-    getLOFreqRADecFromRedis();
+    getLOFreqRADecFromRedis(configNode);
     //TODO: do this properly, based on number of channels, which spectral
     //quarter, etc.
     _fch1 = _LOFreq - (448.0 / 4);
@@ -90,7 +90,7 @@ SigprocStokesWriter::SigprocStokesWriter(const ConfigNode& configNode )
     _file.open(fileName.toUtf8().data(), std::ios::out | std::ios::binary);
 }
 
-void SigprocStokesWriter::getLOFreqRADecFromRedis()
+void SigprocStokesWriter::getLOFreqRADecFromRedis(const ConfigNode& configNode)
 {
     redisContext *c = redisConnect("serendip6", 6379);
 
@@ -111,10 +111,15 @@ void SigprocStokesWriter::getLOFreqRADecFromRedis()
     freeReplyObject(reply);
 
     // Get RA
-    reply = (redisReply *) redisCommand(c, "HMGET SCRAM:PNT PNTRA");
+    // Check which redis key to query, based on the beam ID
+    int beamID = configNode.getOption("beam", "id", "0").toUInt();
+    // Build command with appropriate redis key
+    char cmd[25] = {'\0'};
+    (void) sprintf(cmd, "HMGET SCRAM:DERIVED RA%d", beamID);
+    reply = (redisReply *) redisCommand(c, cmd);
     if (REDIS_REPLY_ERROR == reply->type)
     {
-        std::cerr << "ERROR: Getting LO frequency from redis failed!" << std::endl;
+        std::cerr << "ERROR: Getting RA from redis failed!" << std::endl;
         freeReplyObject(reply);
         redisFree(c);
         return;
@@ -128,7 +133,9 @@ void SigprocStokesWriter::getLOFreqRADecFromRedis()
     freeReplyObject(reply);
 
     // Get dec.
-    reply = (redisReply *) redisCommand(c, "HMGET SCRAM:PNT PNTDEC");
+    // Build command with appropriate redis key
+    (void) sprintf(cmd, "HMGET SCRAM:DERIVED DEC%d", beamID);
+    reply = (redisReply *) redisCommand(c, cmd);
     if (REDIS_REPLY_ERROR == reply->type)
     {
         std::cerr << "ERROR: Getting LO frequency from redis failed!" << std::endl;

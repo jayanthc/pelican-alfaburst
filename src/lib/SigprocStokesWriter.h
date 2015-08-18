@@ -43,7 +43,7 @@ class SigprocStokesWriter : public AbstractOutputStream
         virtual void sendStream(const QString& streamName, const DataBlob* dataBlob);
 
     private:
-        void getLOFreqRADecFromRedis(void);
+        void getLOFreqRADecFromRedis(const ConfigNode& configNode);
         // Header helpers
         void WriteString(QString string);
         void WriteInt(QString name, int value);
