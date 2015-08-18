@@ -82,6 +82,7 @@ void DedispersionDataAnalysisOutput::sendStream(const QString& /*streamName*/, c
   if( dataBlob->type() == "DedispersionDataAnalysis" ) {
     const DedispersionDataAnalysis* data = static_cast<const DedispersionDataAnalysis*>(dataBlob);
     float rms = data->getRMS();
+    //QMutexLocker lock(_mutex);
     foreach( QTextStream* out, _streams ) {
       float SNRmax, DMthis;
       SNRmax = 0.0;

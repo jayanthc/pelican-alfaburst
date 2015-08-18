@@ -5,6 +5,7 @@
 #include "pelican/output/AbstractOutputStream.h"
 #include <QTextStream>
 #include <QString>
+#include <QMutexLocker>
 
 /**
  * @file DedispersionDataAnalysisOutput.h
@@ -40,6 +41,7 @@ class DedispersionDataAnalysisOutput : public AbstractOutputStream
         QList<QIODevice*> _devices;
         time_t _epoch;
         int _indexOfDump;
+        QMutex *_mutex;
 };
 
 PELICAN_DECLARE(AbstractOutputStream, DedispersionDataAnalysisOutput)
