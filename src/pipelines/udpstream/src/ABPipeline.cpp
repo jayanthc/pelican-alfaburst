@@ -55,7 +55,6 @@ void ABPipeline::init()
     _dedispersionModule->unlockCallback( boost::bind( &ABPipeline::updateBufferLock, this, _1 ) );
     _stokesData = createBlobs<SpectrumDataSetStokes>("SpectrumDataSetStokes", history);
     _stokesBuffer = new LockingPtrContainer<SpectrumDataSetStokes>(&_stokesData);
-    //_stokes = (SpectrumDataSetStokes *) createBlob("SpectrumDataSetStokes");
     _intStokes = (SpectrumDataSetStokes *) createBlob("SpectrumDataSetStokes");
     _weightedIntStokes = (WeightedSpectrumDataSet*) createBlob("WeightedSpectrumDataSet");
 
@@ -67,44 +66,37 @@ void ABPipeline::init()
 void ABPipeline::run(QHash<QString, DataBlob*>& remoteData)
 {
 #ifdef TIMING_ENABLED
-    //timerStart(&_totalTime);
+    timerStart(&_totalTime);
 #endif
     // Get pointers to the remote data blob(s) from the supplied hash.
     SpectrumDataSetStokes* stokes = (SpectrumDataSetStokes*) remoteData["SpectrumDataSetStokes"];
     if( !stokes ) throw(QString("No stokes!"));
-    //dataOutput((SpectrumDataSetStokes*) remoteData["SpectrumDataSetStokes"], "AdapterOutput");
-    //_stokes = (SpectrumDataSetStokes*) remoteData["SpectrumDataSetStokes"];
     /* to make sure the dedispersion module reads data from a lockable ring
        buffer, copy data to one */
     SpectrumDataSetStokes* stokesBuf = _stokesBuffer->next();
-    //*stokesBuf = *stokes;
 
-    //dataOutput(_stokes, "AdapterOutput");
-    //_weightedIntStokes->reset(_stokes);
-    //_stokesIntegrator->run(_stokes, _intStokes);
     _stokesIntegrator->run(stokes, _intStokes);
     *stokesBuf = *_intStokes;
     _weightedIntStokes->reset(stokesBuf);
 #ifdef TIMING_ENABLED
-    //timerStart(&_rfiClipperTime);
+    timerStart(&_rfiClipperTime);
 #endif
     _rfiClipper->run(_weightedIntStokes);
 #ifdef TIMING_ENABLED
-    //timerUpdate(&_rfiClipperTime);
+    timerUpdate(&_rfiClipperTime);
 #endif
 #ifdef TIMING_ENABLED
-    //timerStart(&_dedispersionTime);
+    timerStart(&_dedispersionTime);
 #endif
     _dedispersionModule->dedisperse(_weightedIntStokes);
 #ifdef TIMING_ENABLED
-    //timerUpdate(&_dedispersionTime);
+    timerUpdate(&_dedispersionTime);
 #endif
     if (0 == _counter % 100)
     {
         std::cout << _counter << " chunks processed." << std::endl;
     }
 #ifdef TIMING_ENABLED
-#if 0
     timerUpdate(&_totalTime);
     if (0 == _counter % 1000)
     {
@@ -114,14 +106,12 @@ void ABPipeline::run(QHash<QString, DataBlob*>& remoteData)
 
         timerReport(&_totalTime, "Pipeline Time (excluding adapter)");
         std::cout << endl;
-        //std::cout << "Total (average) allowed time per iteration = " << _stokes->getBlockRate() * _stokes->nTimeBlocks() << " sec" << "\n";
         std::cout << "Total (average) allowed time per iteration = " << stokesBuf->getBlockRate() * stokesBuf->nTimeBlocks() << " sec" << "\n";
         std::cout << "Total (average) actual time per iteration = "
                   << ABDataAdapter::_adapterTime.timeAverage +
                   _totalTime.timeAverage << " sec" << "\n";
         std::cout << std::endl;
     }
-#endif
 #endif
 
     _counter++;

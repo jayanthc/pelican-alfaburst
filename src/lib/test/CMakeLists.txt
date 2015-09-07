@@ -14,7 +14,6 @@ set(lofarTestLib_src
     src/PipelineWrapper.cpp
     src/DedispersionDataGenerator.cpp
     src/TestDir.cpp
-    src/JTestEmulator.cpp
     src/ABEmulator.cpp
 )
 
@@ -48,89 +47,45 @@ set(lofarTest_src
     src/DataStreamingTest.cpp
     src/DedispersionDataAnalysisOutputTest.cpp
     src/DedispersionSpectraTest.cpp
-    #src/FilterBankAdapterTest.cpp
-    #src/LofarChunkerTest.cpp
-    src/LockingContainerTest.cpp
-    src/LofarDataSplittingChunkerTest.cpp
-    #src/PelicanBlobClientTest.cpp
-    src/PPF_ChanneliserTest.cpp
-    src/PPF_CoefficientsTest.cpp
-    src/PumaOutputTest.cpp
+    #src/LockingContainerTest.cpp
+    #src/PPF_ChanneliserTest.cpp
     #src/RFI_ClipperTest.cpp
-    # test - commented by Jayanth
     #src/SpectrumDataSetTest.cpp
 )
 if(CUDA_FOUND)
     list(APPEND lofarTest_src
             src/GPU_NVidiaTest.cpp
             src/GPU_ParamTest.cpp
-            # test - commented by Jayanth
-            #src/DedispersionBufferTest.cpp
             src/DedispersionModuleTest.cpp
         #    src/DedispersionAnalyserTest.cpp
         )
 endif(CUDA_FOUND)
-if(HDF5_FOUND)
-if(LOFAR_DAL_FOUND)
-    list(APPEND lofarTest_src
-         src/H5_LofarBFDataWriterTest.cpp
-         src/H5_LofarBFStokesWriterTest.cpp
-         src/H5_LofarBFVoltageWriterTest.cpp
-        )
-endif(LOFAR_DAL_FOUND)
-endif(HDF5_FOUND)
-add_executable(lofarTest ${lofarTest_src})
-set_target_properties(lofarTest PROPERTIES 
-    COMPILE_FLAGS "${OpenMP_CXX_FLAGS}"
-    LINK_FLAGS "${OpenMP_CXX_FLAGS}")
-target_link_libraries(lofarTest
-    pelican-lofar_static
-    lofarTestLib
-    ${PELICAN_TESTUTILS_LIBRARY}
-    ${PELICAN_LIBRARY}
-    ${FFTW3_FFTW_LIBRARY}
-    ${FFTW3_FFTWF_LIBRARY}
-    ${CPPUNIT_LIBRARIES}
-    ${QT_QTCORE_LIBRARY}
-    ${QT_QTNETWORK_LIBRARY}
-    ${QT_QTXML_LIBRARY})
-add_test(lofarTest lofarTest)
-
-
-# ==== Create the lofar udp emulator binary.
-add_executable(lofarEmulator src/lofarEmulatorMain.cpp)
-target_link_libraries(lofarEmulator
-    ${PELICAN_LIBRARY}
-    pelican-lofar_static
-    ${QT_QTNETWORK_LIBRARY}
-    ${QT_QTCORE_LIBRARY}
-    ${QT_QTXML_LIBRARY}
-    lofarTestLib
-)
-
-# ==== Create the lofar binary which sends simulated data.
-add_executable(lofarEmulatorDataSim src/lofarEmulatorDataSimMain.cpp)
-target_link_libraries(lofarEmulatorDataSim
-    ${PELICAN_LIBRARY}
-    pelican-lofar_static
-    ${QT_QTCORE_LIBRARY}
-    ${QT_QTNETWORK_LIBRARY}
-    ${QT_QTXML_LIBRARY}
-    lofarTestLib
-)
-install(TARGETS "lofarEmulatorDataSim" DESTINATION ${BINARY_INSTALL_DIR})
-
-# ==== Create the JTest binary which sends simulated data.
-add_executable(JTestEmulator src/JTestEmulatorMain.cpp)
-target_link_libraries(JTestEmulator
-    ${PELICAN_LIBRARY}
-    pelican-lofar_static
-    ${QT_QTCORE_LIBRARY}
-    ${QT_QTNETWORK_LIBRARY}
-    ${QT_QTXML_LIBRARY}
-    lofarTestLib
-)
-install(TARGETS "JTestEmulator" DESTINATION ${BINARY_INSTALL_DIR})
+#if(HDF5_FOUND)
+#if(LOFAR_DAL_FOUND)
+#    list(APPEND lofarTest_src
+#         src/H5_LofarBFDataWriterTest.cpp
+#         src/H5_LofarBFStokesWriterTest.cpp
+#         src/H5_LofarBFVoltageWriterTest.cpp
+#        )
+#endif(LOFAR_DAL_FOUND)
+#endif(HDF5_FOUND)
+#add_executable(lofarTest ${lofarTest_src})
+#set_target_properties(lofarTest PROPERTIES 
+#    COMPILE_FLAGS "${OpenMP_CXX_FLAGS}"
+#    LINK_FLAGS "${OpenMP_CXX_FLAGS}")
+#target_link_libraries(lofarTest
+#    pelican-lofar_static
+#    lofarTestLib
+#    ${PELICAN_TESTUTILS_LIBRARY}
+#    ${PELICAN_LIBRARY}
+#    ${FFTW3_FFTW_LIBRARY}
+#    ${FFTW3_FFTWF_LIBRARY}
+#    ${CPPUNIT_LIBRARIES}
+#    ${QT_QTCORE_LIBRARY}
+#    ${QT_QTNETWORK_LIBRARY}
+#    ${QT_QTXML_LIBRARY})
+#add_test(lofarTest lofarTest)
+#
 
 # ==== Create the ALFABURST binary which sends simulated data.
 add_executable(ABEmulator src/ABEmulatorMain.cpp)
@@ -143,35 +98,6 @@ target_link_libraries(ABEmulator
     lofarTestLib
 )
 install(TARGETS "ABEmulator" DESTINATION ${BINARY_INSTALL_DIR})
-
-# ==== Create a non cppunit PPF test binary
-add_executable(ppf_performance_test src/PPF_PerformanceTest.cpp)
-set_target_properties(ppf_performance_test PROPERTIES
-    COMPILE_FLAGS "${OpenMP_CXX_FLAGS}"
-    LINK_FLAGS "${OpenMP_CXX_FLAGS}"
-)
-
-target_link_libraries(ppf_performance_test
-    pelican-lofar_static
-    ${PELICAN_LIBRARY}
-    ${QT_QTCORE_LIBRARY}
-    ${QT_QTNETWORK_LIBRARY}
-    ${QT_QTXML_LIBRARY}
-)
-
-# ==== Test the channel profile of the PPF channeliser.
-#add_executable(ppf_profile_test src/PPF_ProfileTest.cpp)
-#set_target_properties(ppf_profile_test PROPERTIES
-#    COMPILE_FLAGS "${OpenMP_CXX_FLAGS}"
-#    LINK_FLAGS "${OpenMP_CXX_FLAGS}"
-#)
-#target_link_libraries(ppf_profile_test
-#    pelican-lofar_static
-#    ${PELICAN_LIBRARY}
-#    ${QT_QTCORE_LIBRARY}
-#    ${QT_QTNETWORK_LIBRARY}
-#    ${QT_QTXML_LIBRARY}
-#)
 
 # ==== Copy files required for testing to the build directory.
 include(${CMAKE_SOURCE_DIR}/cmake/CopyFiles.cmake)

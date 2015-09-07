@@ -6,32 +6,37 @@
 #include "WeightedSpectrumDataSet.h"
 #include <boost/bind.hpp>
 
-namespace pelican {
+using namespace pelican;
+using namespace ampp;
 
-namespace ampp {
 
-
-/**
- *@details SigprocPipeline
- */
+// The constructor. It is good practice to initialise any pointer
+// members to zero.
 SigprocPipeline::SigprocPipeline()
     : AbstractPipeline()
 {
+    _rfiClipper = 0;
+    _dedispersionModule = 0;
 }
 
-/**
- *@details
- */
+// The destructor must clean up and created modules and
+// any local DataBlob's created.
 SigprocPipeline::~SigprocPipeline()
 {
 }
 
-void SigprocPipeline::init() {
+// Initialises the pipeline, creating required modules and data blobs,
+// and requesting remote data.
+void SigprocPipeline::init()
+{
     ConfigNode c = config(QString("SigprocPipeline"));
+    // history indicates the number of datablobs to keep (iterations of run())
+    // it should be Dedidpersion Buffer size (in Blobs)*number of Dedispersion Buffers
     unsigned int history = c.getOption("history", "value", "10").toUInt();
     _minEventsFound = c.getOption("events", "min", "5").toUInt();
     _maxEventsFound = c.getOption("events", "max", "5").toUInt();
 
+    // Create the pipeline modules and any local data blobs.
     _rfiClipper = (RFI_Clipper *) createModule("RFI_Clipper");
     _dedispersionModule = (DedispersionModule*) createModule("DedispersionModule");
     _dedispersionAnalyser = (DedispersionAnalyser*) createModule("DedispersionAnalyser");
@@ -41,14 +46,15 @@ void SigprocPipeline::init() {
     _stokesBuffer = new LockingPtrContainer<SpectrumDataSetStokes>(&_stokesData);
     _weightedIntStokes = (WeightedSpectrumDataSet*) createBlob("WeightedSpectrumDataSet");
 
-    // Request remote data
+    // Request remote data.
     requestRemoteData("SpectrumDataSetStokes");
 }
 
+// Defines a single iteration of the pipeline.
 void SigprocPipeline::run(QHash<QString, DataBlob*>& remoteData)
 {
     SpectrumDataSetStokes* stokes = (SpectrumDataSetStokes*)remoteData["SpectrumDataSetStokes"];
-    if( ! stokes ) throw(QString("no STOKES!"));
+    if( !stokes ) throw(QString("No stokes!"));
 
     /* to make sure the dedispersion module reads data from a lockable ring
        buffer, copy data to one */
@@ -80,7 +86,6 @@ void SigprocPipeline::dedispersionAnalysis( DataBlob* blob ) {
         else{
           if (result.eventsFound() >= _minEventsFound && result.eventsFound() <= _maxEventsFound){
             std::cout << "Writing out..." << std::endl;
-            std::cout << "here!" << std::endl;
             dataOutput( &result, "DedispersionDataAnalysis" );
           }
         }
@@ -88,11 +93,11 @@ void SigprocPipeline::dedispersionAnalysis( DataBlob* blob ) {
 }
 
 void SigprocPipeline::updateBufferLock( const QList<DataBlob*>& freeData ) {
+     // find WeightedDataBlobs that can be unlocked
      foreach( DataBlob* blob, freeData ) {
         Q_ASSERT( blob->type() == "SpectrumDataSetStokes" );
+        // unlock the pointers to the raw buffer
         _stokesBuffer->unlock( static_cast<SpectrumDataSetStokes*>(blob) );
      }
 }
 
-} // namespace ampp
-} // namespace pelican
