@@ -24,22 +24,6 @@ ABPipeline::ABPipeline(const QString& streamIdentifier)
     _dedispersionAnalyser = 0;
     _rfiClipper = 0;
     _counter = 0;
-
-#if 0
-    /* set the CPU affinity of the main thread that reads data off the NIC */
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(5, &cpuset);
-    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) > 0)
-    {
-        std::cerr << "ERROR: Setting affinity failed!" << std::endl;
-    }
-    if (setpriority(PRIO_PROCESS, 0, -20) < 0)
-    {
-        std::cerr << "ERROR: Setting priority failed!" << std::endl;
-        perror("setpriority");
-    }
-#endif
 }
 
 // The destructor must clean up and created modules and

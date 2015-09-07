@@ -36,7 +36,7 @@ class DedispersionEvent
         int _dm;
         unsigned _time;
         const DedispersionSpectra* _data;
-        float _mfBinValue, _mfBinFactor;
+        float _mfBinFactor, _mfBinValue;
 };
 
 } // namespace ampp

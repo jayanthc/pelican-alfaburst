@@ -1,7 +1,7 @@
 #ifndef LOFARUDPHEADER_H_
 #define LOFARUDPHEADER_H_
 
-#include <boost/cstdint.hpp>
+#include <stdint.h>
 
 /**
  * @file LofarUdpHeader.h
