@@ -54,11 +54,6 @@ set(lib_src
     src/LofarDataSplittingChunker.cpp
     src/WeightedSpectrumDataSet.cpp
     src/GPU_MemoryMap.cpp
-    src/JTestChunker.cpp
-    src/JTestDataClient.cpp
-    src/JTestDataAdapter.cpp
-    src/JTestProc.cpp
-    src/JTestOutputStream.cpp
     src/ABChunker.cpp
     src/ABDataClient.cpp
     src/ABDataAdapter.cpp
