@@ -9,7 +9,6 @@
 using namespace pelican;
 using namespace ampp;
 
-
 // The constructor. It is good practice to initialise any pointer
 // members to zero.
 SigprocPipeline::SigprocPipeline()
@@ -17,12 +16,16 @@ SigprocPipeline::SigprocPipeline()
 {
     _rfiClipper = 0;
     _dedispersionModule = 0;
+    _dedispersionAnalyser = 0;
 }
 
 // The destructor must clean up and created modules and
 // any local DataBlob's created.
 SigprocPipeline::~SigprocPipeline()
 {
+    delete _dedispersionAnalyser;
+    delete _dedispersionModule;
+    delete _rfiClipper;
 }
 
 // Initialises the pipeline, creating required modules and data blobs,
@@ -53,7 +56,7 @@ void SigprocPipeline::init()
 // Defines a single iteration of the pipeline.
 void SigprocPipeline::run(QHash<QString, DataBlob*>& remoteData)
 {
-    SpectrumDataSetStokes* stokes = (SpectrumDataSetStokes*)remoteData["SpectrumDataSetStokes"];
+    SpectrumDataSetStokes* stokes = (SpectrumDataSetStokes*) remoteData["SpectrumDataSetStokes"];
     if( !stokes ) throw(QString("No stokes!"));
 
     /* to make sure the dedispersion module reads data from a lockable ring
@@ -87,6 +90,9 @@ void SigprocPipeline::dedispersionAnalysis( DataBlob* blob ) {
           if (result.eventsFound() >= _minEventsFound && result.eventsFound() <= _maxEventsFound){
             std::cout << "Writing out..." << std::endl;
             dataOutput( &result, "DedispersionDataAnalysis" );
+            foreach( const SpectrumDataSetStokes* d, result.data()->inputDataBlobs()) {
+              dataOutput( d, "SignalFoundSpectrum" );
+            }
           }
         }
       }

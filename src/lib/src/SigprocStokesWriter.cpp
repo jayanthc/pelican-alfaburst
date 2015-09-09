@@ -40,12 +40,18 @@ SigprocStokesWriter::SigprocStokesWriter(const ConfigNode& configNode )
     _lbahba     = configNode.getOption("LBA_0_or_HBA_1", "value", "1").toFloat();
     float subbandwidth =  _clock / (_nRawPols * _nTotalSubbands); // subband bandwidth in MHz
     float channelwidth = subbandwidth / _nChannels;
-    
-    // calculate _fch1 from LO frequency and number of channels used
-    getLOFreqRADecFromRedis(configNode);
-    //TODO: do this properly, based on number of channels, which spectral
-    //quarter, etc.
-    _fch1 = _LOFreq - (448.0 / 4);
+
+    _fch1 = 0.0;
+    _fch1 = configNode.getOption("frequencyChannel1", "MHz").toFloat();
+    if (0.0 == _fch1)
+    {
+        // This is ALFABURST pipeline
+        // calculate _fch1 from LO frequency and number of channels used
+        getLOFreqRADecFromRedis(configNode);
+        //TODO: do this properly, based on number of channels, which spectral
+        //quarter, etc.
+        _fch1 = _LOFreq - (448.0 / 4);
+    }
     
     if( configNode.getOption("foff", "value" ) == "" ){ 
       //      _foff     = -_clock / (_nRawPols * _nTotalSubbands) / float(_nChannels);

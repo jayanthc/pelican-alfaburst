@@ -89,7 +89,7 @@ void BandPassAdapter::deserialise(QIODevice* device)
     float deltaF = params[3];
     float rms = params[4];
     float median = params[5];
-    //params.remove(0,6);
+    // Remove everything except median and other polynomial coefficients
     params.remove(0,5);
 
     BinMap map( nChan );

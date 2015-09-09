@@ -44,14 +44,16 @@ void SigprocAdapter::deserialise(QIODevice* in)
         return;
     }
     else if (amountRead < _nSamples * _nChannels) {
-        // Last chunk in file (ignore?)
+        // Last chunk in file - ignore
         _stokesData -> resize(0, 0, 0, 0);
+        throw QString("Last chunk in file - ignoring!");
         return;
     }
 
     // Set timing
-    //_stokesData -> setLofarTimestamp(_tSamp * _iteration * _nSamples);
-    _stokesData -> setLofarTimestamp((_tStart * 86400.0) + (_tSamp * _iteration * _nSamples));
+    double jdStart = _tStart + 2400000.5;
+    double unixTimeStart = (jdStart - 2440587.5) * 86400;
+    _stokesData -> setLofarTimestamp(unixTimeStart + (_tSamp * _iteration * _nSamples));
     _stokesData -> setBlockRate(_tSamp);
 
     // Put all the samples in one time block, converting them to complex
@@ -64,7 +66,7 @@ void SigprocAdapter::deserialise(QIODevice* in)
         }
     }
 
-    _iteration++;
+    ++_iteration;
 
     free(dataTemp);
 }

@@ -185,6 +185,7 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
     _bandPass.reBin(_map);
     // -------------------------------------------------------------
     // Processing next chunk 
+      std::vector<float> foo(nSubbands, 0.0);
     for (unsigned t = 0; t < nSamples; ++t) {
       float margin = std::fabs(_crFactor * _bandPass.rms()); 
       const QVector<float>& bandPass = _bandPass.currentSet();
@@ -213,6 +214,22 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
           copyI[binLocal]=I[index + c] - bandPass[binLocal];
         }
       }
+
+#if 0
+      for (unsigned s = 0; s < nSubbands; ++s)
+      {
+          foo[s] += copyI[s];
+      }
+      if (nSamples - 1 == t)
+      {
+          for (unsigned s = 0; s < nSubbands; ++s)
+          {
+              std::cout << foo[s] / nSamples << std::endl;
+              //std::cout << copyI[s] << std::endl;
+          }
+          std::cout << "------------------------------------------" << std::endl;
+      }
+#endif
 
       // Compute the median of the flattened, model subtracted spectrum
       std::nth_element(copyI.begin(), copyI.begin()+copyI.size()/2, copyI.end());

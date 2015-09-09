@@ -20,9 +20,9 @@ using namespace ampp;
 ABPipeline::ABPipeline(const QString& streamIdentifier)
     : AbstractPipeline(), _streamIdentifier(streamIdentifier)
 {
+    _rfiClipper = 0;
     _dedispersionModule = 0;
     _dedispersionAnalyser = 0;
-    _rfiClipper = 0;
     _counter = 0;
 }
 
@@ -30,8 +30,8 @@ ABPipeline::ABPipeline(const QString& streamIdentifier)
 // any local DataBlob's created.
 ABPipeline::~ABPipeline()
 {
-    //delete _dedispersionModule;
     delete _dedispersionAnalyser;
+    delete _dedispersionModule;
     delete _rfiClipper;
 }
 

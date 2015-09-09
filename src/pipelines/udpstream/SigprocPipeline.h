@@ -10,22 +10,8 @@
 #include "DedispersionDataAnalysisOutput.h"
 #include "WeightedSpectrumDataSet.h"
 
-/**
- * @file SigprocPipeline.h
- */
-
 namespace pelican {
-
 namespace ampp {
-
-/**
- * @class SigprocPipeline
- *
- * @brief
- *    Reads in sigproc files in to a pipeline
- * @details
- *
- */
 
 class SigprocPipeline : public AbstractPipeline
 {
@@ -36,7 +22,7 @@ class SigprocPipeline : public AbstractPipeline
         /// Initialises the pipeline.
         void init();
 
-        /// Runs the pipeline.
+        // Defines one iteration of the pipeline.
         void run(QHash<QString, DataBlob*>& remoteData);
 
         /// called internally to free up DataBlobs after they are finished with
@@ -50,6 +36,7 @@ class SigprocPipeline : public AbstractPipeline
         DedispersionModule* _dedispersionModule;
         DedispersionAnalyser* _dedispersionAnalyser;
 
+        // Local data blob pointers.
         QList<SpectrumDataSetStokes*> _stokesData;
         LockingPtrContainer<SpectrumDataSetStokes>* _stokesBuffer;
         WeightedSpectrumDataSet* _weightedIntStokes;

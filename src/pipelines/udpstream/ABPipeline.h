@@ -7,12 +7,12 @@
 #include "DedispersionAnalyser.h"
 #include "WeightedSpectrumDataSet.h"
 #include "StokesIntegrator.h"
+#ifdef TIMING_ENABLED
 #include "timer.h"
+#endif
 
 namespace pelican {
 namespace ampp {
-
-//class DedispersionModule;
 
 class ABPipeline : public AbstractPipeline
 {
@@ -57,10 +57,11 @@ class ABPipeline : public AbstractPipeline
         unsigned int _minEventsFound;
         unsigned int _maxEventsFound;
 
+#ifdef TIMING_ENABLED
         TimerData _rfiClipperTime;
         TimerData _dedispersionTime;
         TimerData _totalTime;
-
+#endif
 };
 
 } // namespace ampp

@@ -26,7 +26,6 @@ int main(int argc, char* argv[], const QString& stream)
         // Start the pipeline driver.
         pApp.start();
     }
-
     // Catch any error messages from Pelican.
     catch (const QString& err) {
         std::cerr << "Error: " << err.toStdString() << std::endl;

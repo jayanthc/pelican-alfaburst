@@ -9,7 +9,7 @@
 #include <iostream>
 
 using namespace pelican;
-using namespace pelican::ampp;
+using namespace ampp;
 
 int main(int argc, char* argv[])
 {
@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
         // Start the pipeline driver.
         pApp.start();
     }
+    // Catch any error messages from Pelican.
     catch (const QString& error) {
         std::cout << "Error: " << error.toStdString() << std::endl;
     }
