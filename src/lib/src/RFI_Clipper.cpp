@@ -185,7 +185,7 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
     _bandPass.reBin(_map);
     // -------------------------------------------------------------
     // Processing next chunk 
-      std::vector<float> foo(nSubbands, 0.0);
+      ////////////////std::vector<float> foo(nSubbands, 0.0);
     for (unsigned t = 0; t < nSamples; ++t) {
       float margin = std::fabs(_crFactor * _bandPass.rms()); 
       const QVector<float>& bandPass = _bandPass.currentSet();
