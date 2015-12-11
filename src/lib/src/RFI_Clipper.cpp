@@ -181,7 +181,7 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
     // This has all been tested..
     _map.reset( nBins );
     _map.setStart( _startFrequency );
-    _map.setEnd( _endFrequency );
+    _map.setBinWidthFromEndFreq( _endFrequency );
     _bandPass.reBin(_map);
     // -------------------------------------------------------------
     // Processing next chunk 
