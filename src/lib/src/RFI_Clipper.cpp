@@ -13,6 +13,7 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
 //#include "openmp.h"
+#include <hiredis/hiredis.h>
 namespace pelican {
 namespace ampp {
 
@@ -78,15 +79,24 @@ RFI_Clipper::RFI_Clipper( const ConfigNode& config )
     }
     else {
         if( _active ) {
-            if( config.getOption("Band", "startFrequency" ) == "" ) {
-                throw(QString("RFI_Clipper: <Band startFrequency=?> not defined"));
+            if( config.getOption("Band", "startFrequency" ) != "" ) {
+                _startFrequency = config.getOption("Band","startFrequency" ).toFloat();
             }
-            _startFrequency = config.getOption("Band","startFrequency" ).toFloat();
 
-            QString efreq = config.getOption("Band", "endFrequency" );
-            if( efreq == "" )
-                throw(QString("RFI_Clipper: <Band endFrequency=?> not defined"));
-            _endFrequency= efreq.toFloat();
+            if( config.getOption("Band", "endFrequency") != "" ) {
+                _startFrequency = config.getOption("Band","endFrequency" ).toFloat();
+            }
+
+            if ((0.0 == _startFrequency) || (0.0 == _endFrequency))
+            {
+                // This is ALFABURST pipeline
+                // calculate _startFrequency from LO frequency and number of channels used
+                getLOFreqFromRedis();
+                //TODO: do this properly, based on number of channels, which spectral
+                //quarter, channel bandwidth, etc.
+                _startFrequency = _LOFreq - (448.0 / 4);
+                _endFrequency = _startFrequency - (448.0 / 8) + 0.109375;
+            }
         }
     }
 }
@@ -157,6 +167,27 @@ static inline void clipSample( SpectrumDataSetStokes* stokesAll, float* W, unsig
     }
 }
 
+void RFI_Clipper::getLOFreqFromRedis()
+{
+    redisContext *c = redisConnect("serendip6", 6379);
+    redisReply *reply = (redisReply *) redisCommand(c, "HMGET SCRAM:IF1 IF1SYNHZ");
+    if (REDIS_REPLY_ERROR == reply->type)
+    {
+        std::cerr << "ERROR: Getting LO frequency from redis failed!" << std::endl;
+        freeReplyObject(reply);
+        redisFree(c);
+        return;
+    }
+
+    _LOFreq = atof(reply->element[0]->str);
+    // convert to MHz
+    _LOFreq /= 1e6;
+
+    freeReplyObject(reply);
+    redisFree(c);
+
+    return;
+}
 
 // RFI clipper to be used with Stokes-I out of Stokes Generator
 //void RFI_Clipper::run(SpectrumDataSetStokes* stokesAll)
@@ -295,7 +326,8 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
       // This is the RMS of the model subtracted data, in the
       // reference frame of the input
       double spectrumRMS = _bandPass.rms();
-      if (goodChannels != 0)
+      //if (goodChannels != 0)
+      if ((goodChannels / (nChannels * nSubbands)) >= 0.8)
         {
           spectrumRMS = sqrt(spectrumSumSq/goodChannels - std::pow(spectrumSum,2));
         }

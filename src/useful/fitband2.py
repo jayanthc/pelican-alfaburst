@@ -43,8 +43,8 @@ while (linenumber<5000):
     tf=np.vstack([tf,timefreq])
 f.close()
 
-fullrms=np.std(tf,axis=0)
-fullmedian=np.median(tf,axis=1)
+fullrms=np.std(tf)#,axis=0)
+fullmedian=np.median(tf)#,axis=1)
 #print 'fullrms', fullrms, len(fullrms)
 trustedrms=np.mean(fullrms)
 trustedmedian=np.mean(fullmedian)
