@@ -73,6 +73,8 @@ RFI_Clipper::RFI_Clipper( const ConfigNode& config )
     if( config.getOption("zeroDMing", "active" ) == "true" ) {
       _zeroDMing = 1;
     }
+    _startFrequency = 0.0;
+    _endFrequency = 0.0;
     if( config.getOption("Band", "matching" ) == "true" ) {
         _startFrequency = _bandPass.startFrequency();
         _endFrequency = _bandPass.endFrequency();
@@ -84,7 +86,7 @@ RFI_Clipper::RFI_Clipper( const ConfigNode& config )
             }
 
             if( config.getOption("Band", "endFrequency") != "" ) {
-                _startFrequency = config.getOption("Band","endFrequency" ).toFloat();
+                _endFrequency = config.getOption("Band","endFrequency" ).toFloat();
             }
 
             if ((0.0 == _startFrequency) || (0.0 == _endFrequency))
