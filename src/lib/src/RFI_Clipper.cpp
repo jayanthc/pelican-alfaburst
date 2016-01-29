@@ -147,7 +147,7 @@ RFI_Clipper::~RFI_Clipper()
    *
    */
 
-static inline void clipSample( SpectrumDataSetStokes* stokesAll, float* W, unsigned t ) {
+static inline void clipSample( SpectrumDataSetStokes* stokesAll, float* W, unsigned t, std::vector<float> lastGoodSpectrum ) {
 
     float* I = stokesAll->data();
     unsigned nSubbands = stokesAll->nSubbands();
@@ -162,8 +162,9 @@ static inline void clipSample( SpectrumDataSetStokes* stokesAll, float* W, unsig
                 pol, nPolarisations,
                 t, nChannels );
         for (unsigned c = 0; c < nChannels; ++c) {
-            I[index + c] = 0.0;
-            W[index + c] = 0.0;
+            //I[index + c] = 0.0;
+            //W[index + c] = 0.0;
+            I[index + c] = lastGoodSpectrum[c*nSubbands+s];
         }
       }
     }
@@ -209,6 +210,8 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
     unsigned nPolarisations = stokesAll->nPolarisations();
     unsigned nBins = nChannels * nSubbands;
     unsigned goodSamples = 0;
+
+    _lastGoodSpectrum.resize(nBins);
 
     //float modelRMS = _bandPass.rms();
     // This has all been tested..
@@ -292,8 +295,9 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
                                             pol, nPolarisations, t, nChannels );
               spectrumSumAll += I[index+c];
               spectrumSumSqAll += (I[index+c]*I[index+c]);
-              I[index + c] = 0.0;
-              W[index +c] = 0.0;
+              //I[index + c] = 0.0;
+              //W[index +c] = 0.0;
+              I[index + c] = _lastGoodSpectrum[c*nSubbands+s];
             }
           }
           else{
@@ -409,7 +413,7 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
 
         // Clip entire spectrum
         //        std::cout << "Clipping sample" << std::endl;
-        clipSample( stokesAll, W, t );
+        clipSample( stokesAll, W, t, _lastGoodSpectrum );
 /*
         for (unsigned s = 0; s < nSubbands; ++s) {
           long index = stokesAll->index(s, nSubbands,
@@ -443,6 +447,7 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
               // if the channel hasn't been clipped already, remove the spectrum average
               I[index+c] -= (float)_zeroDMing * W[index+c] * spectrumSum;
               I[index+c] /= spectrumRMS;//spectrumRMS;//modelRMS;
+              _lastGoodSpectrum[c*nSubbands+s] = I[index+c];
               //#pragma omp atomic
               newSum += I[index+c];
             }
@@ -479,7 +484,7 @@ void RFI_Clipper::run( WeightedSpectrumDataSet* weightedStokes )
         if (_num != _maxHistory ) {
           //          _runningMedian = (_runningMedian * (float) _num + median)/(float) (_num+1);
           //          std::cout << _num << std::endl;
-          clipSample( stokesAll, W, t );
+          clipSample( stokesAll, W, t, _lastGoodSpectrum );
           _runningMedian = (_runningMedian * (float) _num + medianDelta)/(float) (_num+1);
           _runningRMS = (_runningRMS * (float) _num + spectrumRMS)/(float) (_num+1);
           // store the integral of _historyNewSum and _historyNewSum^2 from the buffer

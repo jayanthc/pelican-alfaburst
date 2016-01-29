@@ -56,6 +56,7 @@ class RFI_Clipper : public AbstractModule
         float _runningRMS; // the running average of the median
         float _integratedNewSum; // the integrated value of the sum of the spectrum
         float _integratedNewSumSq; // the integrated value of the sum of the spectrum
+        std::vector<float> _lastGoodSpectrum;
 };
 
 PELICAN_DECLARE_MODULE(RFI_Clipper)
